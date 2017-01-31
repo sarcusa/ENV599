@@ -9,7 +9,8 @@
 
 #multiple by 9, divide by 5, then add 32
 convertCtoF = function(tempC){
-  ((tempC*9)/5)+32
+  F =((tempC*9)/5)+32
+  return(F)
   }
 
 #first - after you've created your temperature conversion function, run that code, so your function is ready to use 
@@ -32,10 +33,14 @@ for(i in seq(0,100, by = 1)){
 degreeC=seq(0,100, by =1)
 plot(degreeC, degreeF, main="C to F convertion", xlab="Degree C", ylab="Degree F")
 
-
-
 #1e. What temperature is the same in C as in F? I know that you may already know this, and it's much easier to solve algebraically, but I want you to solve it the hard way. Specifically: write a while loop, that uses your function to keep testing integers until you find the answer. If I were you, I'd start with the smallest possible C (that's an integer), and move up, to make sure you don't miss it.
 #remember - be careful with while loops, as they can make your computer keep running forever.
+
+tempC = -100
+while(F!= tempC){
+  tempC=tempC+1
+  F = convertCtoF(tempC)}
+print(F)
 
 #2. OK, what if you wanted to make a more flexible function. Make a new file and call it TemperatureConverter.R
 # temperatureConverter is your one-stop shop for converting any temperature between F, C or K.
@@ -50,9 +55,9 @@ plot(degreeC, degreeF, main="C to F convertion", xlab="Degree C", ylab="Degree F
 #b. converting 200 F to K
 #c. converting 100 C to F with only one input (taking advantage of your defaults)
 
-
-
-
+print(aTemp = TemperatureConverter(300, from = "K", to = "C"))
+print(bTemp = TemperatureConverter(200, from = "F", to = "K"))
+print(aTemp = TemperatureConverter(100, from = "C", to = "F"))
 
 
 ################################
@@ -63,15 +68,19 @@ plot(degreeC, degreeF, main="C to F convertion", xlab="Degree C", ylab="Degree F
 
 
 #3a. what kind of data set is this?
+class(volcano)
+#matrix
 
 
 #3b. what are it's dimensions?
-
+dim(volcano)
+#87 x 61
 
 #this dataset is preloaded in R so you can learn more about it like this:
 ?volcano
 
 #3c. make a quick map of the volcano elevation using the "filled.contour" plotting option
+filled.contour(volcano, color = terrain.colors, asp = 1)
 
 #OK, we're interested in predicting where on the volcano is most likely for landslides to occur
 #to do this, we'd like to make a map of what the slope is, everywhere on the volcano
