@@ -90,20 +90,26 @@ filled.contour(volcano, color = terrain.colors, asp = 1)
 
 volcano<- volcano
 
-slope = function(x = volcano[1,]){
-  for(j in volcano){
-    v=split(volcano,row(volcano))
-  }
+#slope = function(x = volcano[1,]){
+#  for(j in volcano){
+#    v=split(volcano,row(volcano))
+#  }
   
-  for(b in volcano){
-    v2=split(volcano,col(volcano))
-  }
+#  for(b in volcano){
+#    v2=split(volcano,col(volcano))
+#  }
+#  for(i in x){
+#    return(slp=abs(diff(x)))
+#  }
+#}
+
+
+slope = function(x = volcano[1,]){
   for(i in x){
     return(slp=abs(diff(x)))
   }
 }
-
-slope(x= volcano[,2])
+slope(x= volcano[2,])
 
 #4b. now use your function to calculate the slopes from the 43rd column (a north-south stripe), and plot them (x=east-west,y=height)
 #this question doesn't make sense, what does east-west have to do with a north-south stripe?
