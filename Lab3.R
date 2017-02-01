@@ -156,7 +156,7 @@ for(i in averages){
 filled.contour(averages, color = terrain.colors, asp = 1)
 
 
-#part 3 ggplot
+##part 3 ggplot
 
 #EEDA - An introduction to ggplot2
 
