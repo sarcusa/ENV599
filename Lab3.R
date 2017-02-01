@@ -58,7 +58,7 @@ print(F)
 TemperatureConverter(300, from = "K", to = "C")
 TemperatureConverter(200, from = "F", to = "K")
 TemperatureConverter()
-
+#the last tempearture convertion does no work
 
 ################################
 #part 2. More functions and loops
@@ -88,25 +88,72 @@ filled.contour(volcano, color = terrain.colors, asp = 1)
 #4a. to do this, lets right a function, that calculates slope if you give it a vector from the matrix (a vector being 1 column or row from the matrix)
 #so write a function that calculates change in elevation between grid cells in a vector. The output should be all positive {use abs()} and be 1 cell shorter than the input.
 
+volcano<- volcano
+
+slope = function(x = volcano[1,]){
+  for(j in volcano){
+    v=split(volcano,row(volcano))
+  }
+  
+  for(b in volcano){
+    v2=split(volcano,col(volcano))
+  }
+  for(i in x){
+    return(slp=abs(diff(x)))
+  }
+}
+
+slope(x= volcano[,2])
 
 #4b. now use your function to calculate the slopes from the 43rd column (a north-south stripe), and plot them (x=east-west,y=height)
+#this question doesn't make sense, what does east-west have to do with a north-south stripe?
 
+slopes43<-slope(x= volcano[,43])
+
+heights<-volcano[,43]
+newh<-heights[-87]
+
+plot(slopes43,newh, xlab = "East-West", ylab = "Elevation", main = "Slope Changes from Volcano")
 
 #5a. now create a new matrix that's the appropriate size, full of NAs, for your N-S slopes. use matrix() to do this.
+newmatrix<-matrix(data=NA, nrow = 86, ncol=61)
 
 #5b. now write a for loop that loops through all the columns, uses your function to calculate the slopes, and then puts the values into your N-S slopes matrix
 
+
+for(i in seq_len(ncol(newmatrix))){
+  newmatrix[,i]= slope(x= volcano[,i])
+}
+
 #5c. make a filled.contour plot of your N-S slopes
+filled.contour(newmatrix, color = terrain.colors, asp = 1)
 
 #5d. write a command that tells us which cell has the greates N-S slope
 
+which(newmatrix == max(newmatrix), arr.ind = TRUE)
+
+
 #6. repeat this for E-W
 
+newmatrix2<-matrix(data=NA, nrow = 87, ncol=60)
+for(i in seq_len(nrow(newmatrix2))){
+  newmatrix2[i,]= slope(x= volcano[i,])
+}
+
+which(newmatrix2 == max(newmatrix2), arr.ind = TRUE)
 
 #7a.Challenge question: now average your N-S slopes, and E-W slopes together. This is a little tricky, since your matrices are not the same size. It might help to sketch out a grid that shows where you have elevations and where you have slopes (both NS and EW)
 
-#7b. make a final filled.contour plot that shows the average slope. Where is the steepest part of the volcano?
+nm<-newmatrix[,-61]
+nm2<-newmatrix2[-87,]
+my.list<-list(nm,nm2)
+averages<-matrix(data=NA, nrow = 86, ncol=60)
+for(i in averages){
+  averages = apply(simplify2array(my.list),c(1,2),mean)
+}
 
+#7b. make a final filled.contour plot that shows the average slope. Where is the steepest part of the volcano?
+filled.contour(averages, color = terrain.colors, asp = 1)
 
 
 #part 3 ggplot
