@@ -154,9 +154,9 @@ for(i in averages){
 
 #7b. make a final filled.contour plot that shows the average slope. Where is the steepest part of the volcano?
 filled.contour(averages, color = terrain.colors, asp = 1)
+which(averages == max(averages), arr.ind = TRUE)
 
-
-#part 3 ggplot
+##part 3 ggplot
 
 #EEDA - An introduction to ggplot2
 
