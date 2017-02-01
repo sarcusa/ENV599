@@ -55,9 +55,9 @@ print(F)
 #b. converting 200 F to K
 #c. converting 100 C to F with only one input (taking advantage of your defaults)
 
-print(aTemp = TemperatureConverter(300, from = "K", to = "C"))
-print(bTemp = TemperatureConverter(200, from = "F", to = "K"))
-print(aTemp = TemperatureConverter(100, from = "C", to = "F"))
+TemperatureConverter(300, from = "K", to = "C")
+TemperatureConverter(200, from = "F", to = "K")
+TemperatureConverter()
 
 
 ################################
