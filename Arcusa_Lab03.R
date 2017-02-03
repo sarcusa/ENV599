@@ -200,7 +200,7 @@ print(air.plot)
 air.plot<- ggplot(data = airquality, aes(x = Ozone, y = Wind, colour = factor(Month))) +
   geom_point(size = 2, shape = 15)
 print(air.plot)
-#What is the difference? factor(Months) returns discreet colours while Months is assigned to a gradual scale?
+#What is the difference? factor(Months) returns discreet colours while Months is assigned to a continuous scale.
 
 #Now color it by a continuous variable - like Temperature
 air.plot<- ggplot(data = airquality, aes(x = Ozone, y = Wind, colour = Temp)) +
@@ -255,17 +255,17 @@ print(ozone.plot)
 
 oz_mon<- as.matrix(airquality[c(1,5)])
 
-may_m<- mean(oz_mon[1:31,], na.rm= TRUE)
-june_m<-mean(oz_mon[32:61,], na.rm= TRUE)
-july_m<-mean(oz_mon[62:92,], na.rm= TRUE)
-aug_m<-mean(oz_mon[93:123,], na.rm= TRUE)
-sep_m<-mean(oz_mon[124:153,], na.rm= TRUE)
+may_m<- mean(oz_mon[1:31,1], na.rm= TRUE)
+june_m<-mean(oz_mon[32:61,1], na.rm= TRUE)
+july_m<-mean(oz_mon[62:92,1], na.rm= TRUE)
+aug_m<-mean(oz_mon[93:123,1], na.rm= TRUE)
+sep_m<-mean(oz_mon[124:153,1], na.rm= TRUE)
 
-may_s<- sd(oz_mon[1:31,], na.rm= TRUE)
-june_s<-sd(oz_mon[32:61,], na.rm= TRUE)
-july_s<-sd(oz_mon[62:92,], na.rm= TRUE)
-aug_s<-sd(oz_mon[93:123,], na.rm= TRUE)
-sep_s<-sd(oz_mon[124:153,], na.rm= TRUE)
+may_s<- sd(oz_mon[1:31,1], na.rm= TRUE)
+june_s<-sd(oz_mon[32:61,1], na.rm= TRUE)
+july_s<-sd(oz_mon[62:92,1], na.rm= TRUE)
+aug_s<-sd(oz_mon[93:123,1], na.rm= TRUE)
+sep_s<-sd(oz_mon[124:153,1], na.rm= TRUE)
 
 may<- c(may_m,may_s)
 june<-c(june_m,june_s)
@@ -368,10 +368,6 @@ print(my.plot)
 #3e. There's now a lot of information on one figure about what controls ozone. Under what conditions is the relationship the strongest? Why do you think this is the case?
 
 #the strongest correlation is found for august, during sunny days where ozone concentration is seen to be highest at low wind speeds. As we have seen earlier, higher ozone correlates also with higher temperatures, which would correlate most with sunny days than cloudy days in summer. 
-
-
-
-
 
 
 
