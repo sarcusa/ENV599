@@ -30,21 +30,18 @@ convertKtoC = function(tempKC){
 }
 
 TemperatureConverter = function(x = 100, from= "C", to= "F" ){
-#pips = 
-    if(from=="K"& to == "C"){
-      return(print(convertKtoC(x)))
-    }else{
-      return(print(convertCtoK(x)))
-    }
-  if(from == "K"& to == "F"){
+  if(from=="K"& to == "C"){
+    return(print(convertKtoC(x)))
+  }else if (from == "C" & to == "K"){
+    return(print(convertCtoK(x)))
+  }else if (from == "K"& to == "F"){
     return(print(convertKtoF(x)))
-  }else{
+  }else if (from == "F" & to == "K"){
     return(print(convertFtoK(x)))
-  }
-  if(from == "C" & to =="F"){
+  }else if(from == "C" & to =="F"){
     return(print(convertCtoF(x)))
-  }else{
-   return(print(convertFtoC(x)))
+  }else if (from == "F" & to == "C"){
+    return(print(convertFtoC(x)))
   }
 }
 
