@@ -64,29 +64,32 @@ r.tot = rowSums(winter, na.rm = T)
 #=============================================================
 ## 4. Compute the steady state probability vectors for a) summer, and b) winter from their respective matrices of transition probabilities. Do this by computing the left-eigenvectors of each matrix, and normalizing each left-eigenvector by its sum. Note that you may get both the real and imaginary parts but we are only interested in the absolute of the vectors (use the abs() command). Also note that Mason and Holmes did not do this analysis in their paper
 
+library(expm)
+
 #summer
 
-summer[is.na(summer)] <- 0
-se = eigen(t(summer))
-abs(se$vectors)
-se%^%2000
+sen = (summer %^% 15)[1,]
+#summer[is.na(summer)] <- 0
+#se = eigen(t(summer))
+#abs(se$vectors)
 
-r.tot = colSums(abs(se$vectors))
-sen = round(abs(se$vectors)/r.tot, digits = 2)
-colnames(sen) = c("M", "N", "O", "P", "Q", "R", "S")
-rownames(sen) = c("M", "N", "O", "P", "Q", "R", "S")
+
+#r.tot = rowSums(abs(se$vectors))
+#sen = round(abs(se$vectors)/r.tot, digits = 2)
+#colnames(sen) = c("M", "N", "O", "P", "Q", "R", "S")
+#rownames(sen) = c("M", "N", "O", "P", "Q", "R", "S")
 
 #winter
 
-winter[is.na(winter)] <- 0
-we = eigen(t(winter))
-abs(we$vectors)
+wen = (winter %^% 15)[1,]
+#winter[is.na(winter)] <- 0
+#we = eigen(t(winter))
+#abs(we$vectors)
 
-r.tot = colSums(abs(we$vectors))
-wen = round(abs(we$vectors)/r.tot, digits = 2)
-rownames(wen) = c("M", "N", "O", "P", "Q", "R", "S", "X", "Y")
-colnames(wen) = c("M", "N", "O", "P", "Q", "R", "S", "X", "Y")
-
+#r.tot = colSums(abs(we$vectors))
+#wen = round(abs(we$vectors)/r.tot, digits = 2)
+#rownames(wen) = c("M", "N", "O", "P", "Q", "R", "S", "X", "Y")
+#colnames(wen) = c("M", "N", "O", "P", "Q", "R", "S", "X", "Y")
 
 #=============================================================
 # 5. Make a plot showing the steady state probability vectors for summer and winter as a function of state. This can be any style of plot that you choose.
