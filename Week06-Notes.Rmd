@@ -1,0 +1,329 @@
+---
+title: "Variance, Covariance, Correlation"
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document: default
+---
+
+# Variance, Covariance, Correlation
+
+##Variance
+
+Variance is a simple way of quantifying the amount of variability around a mean in a dataset. It's calculated simply as the sum of squares of the data, after subtracting the mean of the data. Or in linear algebra:
+
+$$Variance = \frac{(x - \bar{x})^T (x - \bar{x})}{df}$$
+Let's examine this with some data in R, will use the dataset "trees"
+
+```{r}
+head(trees)
+```
+
+#what is a better predictor of V?
+Let's calculate the variance of the tree girth.
+```{r}
+girth = trees$Girth
+girthhat = mean(girth)
+#so the var is
+t(girth-girthhat)%*%(girth-girthhat)/ (length(girth)-1)
+girth.var = var(girth)
+
+girthAnom = trees[,1]-mean(trees[,1])
+girthVar = t(girthAnom)%*%girthAnom
+print(girthVar)
+```
+What are the units of this variance?
+
+What if you wanted it in the units of the dataset?
+
+###Standard deviation.
+Yep, standard deviation is just the square root of the varaince
+
+OK, let's visualize what we just did
+
+```{r}
+
+# convert to SD
+girth.sd = sqrt(girth.var)
+print(girth.sd)
+sd(girth)
+
+
+library(ggplot2)
+mean.girth = mean(trees$Girth)
+trees = trees
+trees$girth.anom = trees$Girth-mean.girth
+head(trees)
+ggplot(trees,aes(x=1:nrow(trees),y=girth.anom))+geom_bar(stat="identity")
+
+```
+
+##Standard deviation
+##Covariance
+
+OK, now that you understand what variance is, what do you think covariance is?
+
+We'll use trees again, and calculate the covariance of height and volume. First let's make a scatter plot.
+
+```{r}
+#examine the relationship between two variables
+ggplot(trees)+ geom_point(aes(x = trees$Height, y = trees$Volume))
+
+#calculate the cov of height and volume
+height.anom = trees$Height - mean(trees$Height)
+vol.anom = trees$Volume - mean(trees$Volume)
+
+#transpose matrix
+covHV = t(height.anom)%*%vol.anom / (length(vol.anom)-1) #this is in units
+print(covHV)
+
+#compare girth to volume
+girth.anom = trees$Girth - mean(trees$Girth)
+
+covGV = t(girth.anom)%*%vol.anom / (length(vol.anom)-1)
+print(covGV)
+
+#check
+cov(trees$Girth,trees$Volume)
+
+ggplot(trees,aes(x=Height, y=Volume)) + geom_point() 
+```
+OK, there's clearly a relationship, so let's calculate the covariance. The equation for covariance is just like variance: 
+
+$$Covariance = \frac{(x - \bar{x})^T (y - \bar{y})}{df}$$
+
+In R:
+
+```{r}
+height.anom = trees$Height - mean(trees$Height)
+volume.anom = trees$Volume - mean(trees$Volume)
+covarianceHV = t(height.anom) %*% volume.anom
+print(covarianceHV)
+
+```
+What are the units on that number?
+
+OK, let's compare that with covariance between Girth and Volume:
+
+
+
+```{r}
+girth.anom = trees$Girth - mean(trees$Girth)
+volume.anom = trees$Volume - mean(trees$Volume)
+covarianceGV = t(girth.anom) %*% volume.anom
+print(covarianceGV)
+
+```
+
+So which of the two datasets is more related to volume?
+#we cannot tell because the units are not meaningful, so we must use correlation instead of cov
+
+##Correlation
+Right. So covariance is a useful concept, but difficult to interpret on its own, and not particularly valuable for comparisons between unlike variables. Perhaps we should *normalize* that that number by something useful.
+
+Suggestions?
+
+Seems like if we normalize it by the highest possible amount of covariance, that would reveal the relative amount covariance.
+
+The maximum possible covariance occurs when two vectors are linear transformations of themselves. If the identical, that's equivalent to variance. If not, the maximum covariance is 
+
+$$\sqrt{var_x * var_y}$$
+
+So the relative amount of the highest covariance is
+
+$$\rho = \frac{cov}{\sqrt{var_x * var_y}}$$
+This is called *correlation*, and $\rho$ is the correlation coefficient.
+
+Let's calculate $\rho$ for each of our covariances above and see which is higher.
+
+```{r}
+corHV = covHV/sqrt(var(trees$Height)*var(trees$Volume))
+print(corHV)
+cor(trees$Height,trees$Volume)
+
+corGV = covGV/sqrt(var(trees$Girth)*var(trees$Volume))
+print(corGV)
+
+#what fraction of total var does the girth volume relationship explain?
+print(corGV^2)
+
+ggplot(trees,aes(x=Girth, y=Volume)) + geom_point() 
+#to predict the volume of a tree, measure the girth not the height
+
+maxCovHV = sqrt(t(height.anom)%*%height.anom * t(volume.anom)%*%(volume.anom))
+maxCovGV =  sqrt(t(girth.anom)%*%girth.anom * t(volume.anom)%*%(volume.anom))
+
+rhoHV = covarianceHV/maxCovHV
+rhoGV = covarianceGV/maxCovGV
+
+print(rhoHV)
+print(rhoGV)
+```
+Let's check our answer using the built in cor() function:
+```{r}
+print(cor(trees$Height,trees$Volume))
+print(cor(trees$Girth,trees$Volume))
+
+```
+Phew. It worked.
+
+##Fraction of Variance. 
+
+So if we square $\rho$, get:
+
+$$\rho^2 = \frac{cov^2}{var_x*var_y}$$
+Which compares the covariance, to the total variance in both datasets. This is why it's reasonable to think of $\rho^2$ as the fraction of total variance explained by the covariance.
+
+
+##Significance testing
+Now that we have a number that's comparable between multiple datasets, we'd like to have some idea if our correlation coefficients are something special. Is a value of 0.23 good? How about -0.5? Which means that there's  a "real" correlation?
+
+Let's think about his in terms of a null hypothesis. If we set our null hypothesis to be: 
+
+"The correlation between these two datasets is less extreme than what is produced by two random datasets 95% of the time"
+
+If we can show that our value is higher than that 95% confidence level, then we reject the null hypothesis, and call it significant at the 95% level.
+
+So let's generate a whole bunch of random data to see what that looks like. 
+
+```{r}
+#generate random data and correlate them
+
+r=c()#Initialize a spot for our random calculations to go
+for(i in 1:1000){#lets do this a thousand times
+  rd1 = rnorm(100)#simulate data each time through the loop
+  rd2 = rnorm(100)#twice
+  r[i] = cor(rd1,rd2)#correlate and store the values
+}
+#now let's plot it
+ggplot()+geom_histogram(aes(x=r,y=..density..)) #Let's look at my favorite plot
+#what is the proba that random numbers could give a correlation of greater than 0.2 (neg and pos)
+
+
+```
+
+And we see that this looks something like a normal distribution, but is sensitive to the number of observations. This is modeled well with a Student's T distribution, and you'll go through this in your lab. I'll do an example here with with a different test we want to use a t-distribution for.
+
+
+##Probability testing example, difference of means testing.
+To do this, we'll take a look at the Beavers dataset.
+
+We're interested in the probability that Beaver1's mean body temperature is less than 37 degrees.
+
+```{r}
+#Lets take a look at our observations of beaver temp
+ggplot(beaver1)+geom_histogram(aes(x=temp,y=..density..))+geom_vline(xintercept = 37,color="red")
+```
+Student T distributions, by definition, always have a mean of zero. Let's make our data have a mean of zero and a standard deviation of 1, and then we can compare it to a Students' T.
+
+```{r}
+#Lets take a look at our observations
+
+#same code as below but nicer, i.e. convert data to a t-stat value
+tmean = (beaver1$temp - mean (beaver1$temp))/ (sd(beaver1$temp)/sqrt(length(beaver1$temp)))
+ggplot(beaver1)+geom_histogram(aes(x=tmean,y=..density..))+geom_vline(xintercept = 37,color="red")
+
+#convert to t distribution space
+t37 = (37-mean(beaver1$temp))/(sd(beaver1$temp)/sqrt(length(beaver1$temp)))
+myplot = ggplot()+geom_histogram(aes(x = tmean, y = ..density..))+geom_vline(xintercept = t37)
+
+#other code which actually works 
+myplot = ggplot(beaver1)+geom_histogram(aes(x=(temp-mean(temp))/(sd(temp)/sqrt(length(beaver1$temp))),y=..density..))+geom_vline(aes(xintercept = (37-mean(beaver1$temp))/(sd(beaver1$temp)/sqrt(length(beaver1$temp))),color="red"))
+#and let's add a tdistribution
+td = dt(seq(-3,3,by=.1),df=length(beaver1$temp)-2)
+ndf = data.frame(x=seq(-3,3,by=.1),y=td)
+
+myplot+geom_area(data=ndf,aes(x=x,y=y),fill="red",alpha=0.5)
+
+
+```
+
+Again, we're no longer comparing to see if the mean temperature is less than 37, we've converted 37 into T-distribution space by subtracting the mean and dividing by the standard deviation.
+
+```{r}
+#so to actually do the p value calculation you use your t stat which is t37 here (Tstat = t37)
+Tstat = (37-mean(beaver1$temp))/(sd(beaver1$temp)/sqrt(length(beaver1$temp)))
+print(Tstat)
+```
+
+
+So now we want to see how our T-distribution compares to our "T-stat"
+So we'll use the cumulative probability function, to see the probability that the T-dsitribution with the appropriate df is less than our T-stat
+```{r}
+tcum = pt(seq(-7,7, length.out = 100), df = length(beaver1$temp)-2)
+plot(seq(-7,7, length.out = 100), tcum)
+#can calculate the cumulative prba that the value is less than our tstat like this
+pval = pt(Tstat,df = length(beaver1$temp)-2)
+print(pval)
+#if looking at greater than, then use 1-pt()
+```
+
+OK, but what if we wanted to estimate how well we know our mean, or more specifically, the probability that our mean is more than 0.1 degrees different than our measured mean?
+
+Now we're interested in the probability that the mean is:
+
+*less than 36.83 degrees or greater than 36.89 degrees*
+
+Graphically, this might look like this:
+```{r}
+t36.84 = (36.84-mean(beaver1$temp))/(sd(beaver1$temp)/sqrt(length(beaver1$temp)))
+pt(t36.84,df = length(beaver1$temp)-2)
+myplot = ggplot()+geom_histogram(aes(x = tmean, y = ..density..))+geom_vline(xintercept = t36.84, colour = "blue")
+myplot+geom_area(data=ndf,aes(x=x,y=y),fill="red",alpha=0.5)
+
+tstatHi = 0.03/(sd(beaver1$temp)/sqrt(length(beaver1$temp)))
+tstatLo = -0.03/(sd(beaver1$temp)/sqrt(length(beaver1$temp)))
+
+x1 = seq(-4,4,length.out = 50)
+d1 = dt(x1,df=length(beaver1-2))
+x2 = seq(tstatHi,4,length.out = 50)
+d2 = dt(x2,df=length(beaver1-2))
+x3 = seq(-4,tstatLo,length.out = 50)
+d3 = dt(x3,df=length(beaver1-2))
+
+plotdf = data.frame(x1,x2,x3,d1,d2,d3)
+ggplot(plotdf)+geom_area(aes(x1,d1),fill = "black")+geom_area(aes(x2,d2),fill="red",alpha=0.5)+geom_area(aes(x3,d3),fill="red",alpha=0.5)
+```
+
+
+We can test this with a T-test too, and because the T-distribution is symmetrical, we can just look at the cumulative probability on the left side, and double it:
+
+```{r}
+pt(tstatLo,df=length(beaver1$temp))*2
+```
+Or if we were generalizing, and about the probability that the value was *x* more extreme than the mean, we could say:
+```{r}
+x=tstatHi#x can be positive or negative now!
+
+pt(-abs(x),df=length(beaver1$temp))*2
+
+```
+
+##Side note - functions with multiple outputs.
+One last thing. It's often useful to calculate values with multiple, and sometimes different kinds of outputs. But R only lets you export one thing from a function, and then it ends. Do this, you should take advantage of R's most general data type, the *list*. Think of a list as a bucket of any other kind of data with a name. Here's an example:
+
+Write a function that you input a vector, and it returns both the mean, standard deviation and the input vector.
+
+```{r}
+awesome = function(vec){
+  out = list()#initialize my list
+  out$mean = mean(vec)#calculate and store the mean
+  out$sd = sd(vec)#again for sd
+  out$input = vec#and store the vector.
+  
+  return(out)
+}
+
+
+my.out = awesome(rnorm(100)) #let's try with 100 random datapoints
+print(my.out$mean)
+print(my.out$input)
+
+
+
+```
+
+
+
+
+
