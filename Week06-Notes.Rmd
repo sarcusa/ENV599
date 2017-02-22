@@ -271,6 +271,10 @@ pt(t36.84,df = length(beaver1$temp)-2)
 myplot = ggplot()+geom_histogram(aes(x = tmean, y = ..density..))+geom_vline(xintercept = t36.84, colour = "blue")
 myplot+geom_area(data=ndf,aes(x=x,y=y),fill="red",alpha=0.5)
 
+#what is the proba that our mean is more than 0.03 degrees different than the calculated mean
+
+observedmean = mean(beaver1$temp)
+
 tstatHi = 0.03/(sd(beaver1$temp)/sqrt(length(beaver1$temp)))
 tstatLo = -0.03/(sd(beaver1$temp)/sqrt(length(beaver1$temp)))
 
@@ -283,19 +287,122 @@ d3 = dt(x3,df=length(beaver1-2))
 
 plotdf = data.frame(x1,x2,x3,d1,d2,d3)
 ggplot(plotdf)+geom_area(aes(x1,d1),fill = "black")+geom_area(aes(x2,d2),fill="red",alpha=0.5)+geom_area(aes(x3,d3),fill="red",alpha=0.5)
+
 ```
 
 
 We can test this with a T-test too, and because the T-distribution is symmetrical, we can just look at the cumulative probability on the left side, and double it:
 
 ```{r}
-pt(tstatLo,df=length(beaver1$temp))*2
+#probability of the Tstat to be lower than than the critical value, using the cumulative probab at the critical value
+
+#for the left tail: (for the right tail use 1-pt)
+pt(tstatLo,df=length(beaver1$temp)-2) #pt calculates the cumulative proba
+
 ```
 Or if we were generalizing, and about the probability that the value was *x* more extreme than the mean, we could say:
 ```{r}
+#for a generalised approach
 x=tstatHi#x can be positive or negative now!
 
-pt(-abs(x),df=length(beaver1$temp))*2
+pValue = pt(-abs(x),df=length(beaver1$temp)-2)*2 #gives the area under both tails
+print(pValue)
+
+#monte carlo methods
+#simulate random beaver temperatures 1000 times and see how much our mean varies
+
+bmean = mean(beaver1$temp)
+bsd = sd(beaver1$temp)
+nits = 1000 #number of iterations
+simBeaverMean = matrix(NA,nits,1) #create a matrix of NAs with nits dimensions, filled by row
+
+for(i in 1:nits){
+  simBeaver = rnorm(n = length(beaver1$temp), mean = bmean, sd = bsd)
+  simBeaverMean[i] = mean(simBeaver)
+}
+
+hist(simBeaver)
+
+#random version of the beaver1 dataset using random simulated values
+#then we are storing the mean into the empty matrix
+
+#now we have 1000 possible means from our dataset
+
+hiTemp = bmean + 0.03
+loTemp = bmean - 0.03
+
+ggplot()+ geom_histogram(aes(x = simBeaverMean))+geom_vline(aes(xintercept = loTemp))+
+  geom_vline(aes(xintercept= hiTemp))
+
+#can set a seed to get the exact same random variables, otherwise the MC will never get the same results
+
+#can't integrate the area under the curve of a MC, empirical proba dis rather than theoretical
+
+#use simulated results to calculate a 95% CI on our mean
+quantile(simBeaverMean, c(0.025, 0.975))
+
+#figuring out percentiles, given a certain critical value?
+beaverCDF = ecdf(simBeaverMean)
+
+ourProbs = beaverCDF(c(loTemp,hiTemp))
+print(ourProbs)
+totalExtremeProb = ourProbs[1]+(1-ourProbs[2])
+print(totalExtremeProb)
+
+#one more example
+
+#this is called bootstrapping
+
+nits = 1000 #number of iterations
+simBeaverMean = matrix(NA,nits,1) 
+
+for(i in 1:nits){
+  simBeaver = sample(beaver1$temp, size = length(beaver1$temp), replace =T)
+  simBeaverMean[i]= mean(simBeaver)
+}
+
+hiTemp = bmean + 0.03
+loTemp = bmean - 0.03
+
+ggplot()+ geom_histogram(aes(x = simBeaverMean))+geom_vline(aes(xintercept = loTemp))+
+  geom_vline(aes(xintercept= hiTemp))
+
+quantile(simBeaverMean, c(0.025, 0.975))
+
+beaverCDF = ecdf(simBeaverMean)
+
+ourProbs = beaverCDF(c(loTemp,hiTemp))
+print(ourProbs)
+totalExtremeProb = ourProbs[1]+(1-ourProbs[2])
+print(totalExtremeProb)
+
+#v similar but with a lower p value
+
+#jackknifing
+
+simBeaverMean = matrix(NA,length(beaver1$temp),1) 
+
+for(i in 1:length(beaver1$temp)){
+  simBeaver = beaver1$temp[-i]
+  simBeaverMean[i]= mean(simBeaver)
+}
+
+hiTemp = bmean + 0.03
+loTemp = bmean - 0.03
+
+ggplot()+ geom_histogram(aes(x = simBeaverMean))+geom_vline(aes(xintercept = loTemp))+
+  geom_vline(aes(xintercept= hiTemp))
+
+quantile(simBeaverMean, c(0.025, 0.975))
+
+beaverCDF = ecdf(simBeaverMean)
+
+ourProbs = beaverCDF(c(loTemp,hiTemp))
+print(ourProbs)
+totalExtremeProb = ourProbs[1]+(1-ourProbs[2])
+print(totalExtremeProb)
+
+#proba of mean being more extreme than the critical values is 0 in this case
 
 ```
 
