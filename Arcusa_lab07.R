@@ -53,9 +53,9 @@ myplot
 
 #2a. Create a function that uses linear algebra to create a model of Y = X*b, that has two inputs - your design matrix X, and your predictand Y, that returns b
 
-B = function(X = Xd, Y = Y){
-  XX=t(X)%*%Xd
-  XY=t(X)%*%Y
+B = function(Xd , Y ){
+  XX=t(Xd)%*%Xd
+  XY=t(Xd)%*%Y
   B=solve(XX)%*%XY
   return(B)
 }
@@ -70,7 +70,7 @@ b = B(Xd, Y) # b is the slope
 
 yhat=Xd%*%b
 
-new.plot = myplot + geom_line(aes(X,yhat))
+new.plot = myplot + geom_line(aes(X,yhat, colour = "no intercept in calculation"))
 new.plot
 
 residuals = Y-yhat
@@ -111,9 +111,9 @@ his.plot #it is an improvement as the clusters have come together a bit more tha
 
 #2d. A new eruption is starting! It's been 83 minutes since the last eruption. Your boss asks how long it will last. What's the answer?
 
-eruption.lm = lm(Y ~ X)
-nd = data.frame(X=83)
-predict(eruption.lm, nd, interval="predict") 
+X83 = c(1, 83)  
+pred = X83%*%b 
+print(pred)
 
 #3. Your boss says "Great!"; but being a graduate of this class she likes to think probabilistically. So she asks "What's the uncertainty in your prediction?".
 
@@ -124,9 +124,7 @@ s = sqrt(MSE)
 covB = solve(t(Xd)%*%Xd)*as.vector(s^2)
 stdb = diag(sqrt(covB))
 
-Xd = c(1,83)
-pred = Xd%*%b 
-pred.unc = Xd%*%stdb
+pred.unc = X83%*%stdb
 print(pred.unc)
 
 #3a. Back to the drawing board. You need to beef up your function to include uncertainty. First, let's calculate the standard error of the regression. To do this you will use the regression residuals (the differences between the real Y-values and the predicted y-values (or y-hat)).
@@ -145,10 +143,11 @@ s = sqrt(MSE)
 #is a measure of the difference between the predicted and actual values. it has the same units as the quantity being estimated, in this case, the eruption duration, which is in minutes
 
 #3c. Now you need to use s, to estimate the standard error of the regression coefficients. First calculate the covariance matrix of design matrix, and multiply that by s^2. The standard error of the regression coefficients is equal to sqrt of the covariance matrix.
-#Note, you will get a square matrix, with the standard errors along the diagnal. Use diag() to extract just the diagnal.
+#Note, you will get a square matrix, with the standard errors along the diagnal. Use diag() to extract just the diagnal
 
 covB = solve(t(Xd)%*%Xd)*as.vector(s^2)
 stdb = diag(sqrt(covB))
+print(stdb)
 
 #3d. OK, now we have standard error estimates on our regression coefficents. Calculate two more lines for your plot, that characterize twice the range of the standard error (the two sigma range). Add this range to your plot using geom_ribbon().
 
@@ -161,9 +160,9 @@ unc.plot = new.new.plot +
 unc.plot
 #3e. The last eruption ended up being 4 minutes long - different than your prediction. Now your boss really wants to have uncertainy on your prediction. Another eruption is starting, we've been waiting only 61 minutes. Provide a new prediction to your boss with a best estimate, and 2-sigma uncertainty range. 
 
-eruption.lm = lm(Y ~ X)
-nd = data.frame(X=61)
-predict(eruption.lm, nd, interval="predict") 
+X61 = c(1, 61)  
+pred = X61%*%b 
+print(pred)
 
 SSE = t(residuals)%*%residuals
 MSE = SSE / (length(Y)-length(b)) 
@@ -172,52 +171,136 @@ s = sqrt(MSE)
 covB = solve(t(Xd)%*%Xd)*as.vector(s^2)
 stdb = diag(sqrt(covB))
 
-Xd = c(1,61)
-pred = Xd%*%b 
-pred.unc = Xd%*%(2*stdb)
+pred.unc = X61%*%(2*stdb)
 print(pred.unc)
 
 #3f. Your boss appreciates your more probabilistic prediction; however she needs the answer to a specific question. A bigwig is visiting the park, but only has time to watch a short eruption. If your boss tells the bigwig that this eruption will be less than three minutes, and it's not, she will be fired. Assuming your predictive model follows a normal distribution, what's the probability that the upcoming eruption will be less than 3 minutes long? Make a plot that shows the distribution of possibilities that support your probability estimate.
 
-xseq = seq(40,98,length.out = 100) #the numbers come from point 5, the spread of the uncertainty in the plot with the regression
+xseq = seq(min(Y),max(Y),length.out = 100) 
 gauss = dnorm(xseq,mean = pred,sd=pred.unc)
-ggplot()+geom_area(aes(xseq,gauss),fill = "white")+geom_vline(xintercept = 80)
+ggplot()+geom_area(aes(xseq,gauss),fill = "blue", alpha = 0.5)+geom_vline(xintercept = 3)+labs(x = "Eruption duration", y = "gaussian probability")
 
-1-pnorm(3,mean = pred,sd = pred.unc)
-
+pnorm(3,mean = pred,sd = pred.unc)
 
 #Part 2. Multiple regression.
 #Bad news. That last eruption ended up lasting 181 secs, and you got fired. Such is life of an Earth and Environmental Data Analyst. Good news though, you got a new job working for an oil company. 
 
 #Now you're going to use your same tools to create a new regression model to predict permeability based on some image-analysis data on rock samples. Your training dataset is called "rock"
-#?rock
+?rock
 
-#4a. First, explore your data. Create a facted ggplot that shows permeability plotted against area, perimeter and shape.
+#4a. First, explore your data. Create a facted ggplot that shows permeability plotted against area, perimeter and shape 
+mydata = na.omit(rock)
+colnames(mydata) = c("Area", "Perimeter", "Shape", "Permeability")
+
+library(reshape)
+melted = melt(mydata, id.vars = "Permeability")
+
+rock.plot = ggplot(data= melted)+
+  geom_point(aes(x = Permeability, y = value))+
+  facet_grid(variable ~.)
+  
+rock.plot 
 
 #4b. Use your regression function to create linear models for all three predictors (area, shape, and perimeter) separately. For each model, calculate yhat (the permeability values predicted by your model), and calcuate the percent of variance that is represented by your model (using what we learned last week in lab).
 
+per.var = function(Xd , Y ){
+  out =list()
+  XX=t(Xd)%*%Xd
+  XY=t(Xd)%*%Y
+  B=solve(XX)%*%XY
+  Yhat = Xd%*%B
+  covB = solve(t(Xd)%*%Xd)*as.vector(s^2)
+  r2 = (cor(Y, Yhat) [[1]])^2
+  out$Yhat = Yhat
+  out$r2 = r2
+  out$B = B
+  print(out)
+}
+
+X1 = mydata$Area
+X2 = mydata$Perimeter
+X3 = mydata$Shape
+Y = mydata$Permeability
+ones = matrix(1,nrow = length(Y))
+
+Xd1 = cbind(ones,X1)
+Xd2 = cbind(ones,X2)
+Xd3 = cbind(ones,X3)
+
+r1 = per.var(Xd1, Y)[[2]]
+r2 = per.var(Xd2, Y)[[2]]
+r3 = per.var(Xd3, Y)[[2]]
 
 #4c. Use the same function you wrote before to create a MULTIPLE linear regression model, using area, perimeter AND shape as predictors. Calculate percent variance explained (R^2) for this model as well.
 
+Xd.m = cbind(ones,X1,X2,X3)
 
+r4 = per.var(Xd.m, Y)
+r4$r2
 
 #4d. Examine the standard errors in your regression model. They're a little hard to compare since they're all in different units. Convert them all to percentages of the b values. Based on this, which predictor is doing most of the heavy lifting in the model? Is this consistent with the percent variance explained you observed in 4b?
 
+per.stE = function(Xd , Y ){
+  XX=t(Xd)%*%Xd
+  XY=t(Xd)%*%Y
+  B=solve(XX)%*%XY
+  Yhat = Xd%*%B
+  covB = solve(t(Xd)%*%Xd)*as.vector(s^2)
+  residuals = Y-Yhat
+  SSE = t(residuals)%*%residuals
+  MSE = SSE / (length(Y)-length(B))
+  s = sqrt(MSE)
+  covB = solve(t(Xd)%*%Xd)*as.vector(s^2)
+  stdB = diag(sqrt(covB))
+  per.error = stdB/B
+  print(per.error)
+}
 
+r.per = per.stE(Xd.m, Y)
+which(r.per== min(r.per), arr.ind = T) #perimeter is the most contributing variable (lowest percentage variance) which is consitent with the values calculated previously (perimeter returns the highest r2 in 4b).
 
 #Part 3. Polynomial regression
 #Well, the price of oil continued to fall and you lost your oil company job. Good thing you have such a strong skillset to fall back on! You quickly obtained new work with a logging company.
 
 #Federal law requires that your company not cut trees that are older than 20 years; and your new boss asks you to create a model to predict age based on tree height. They provide you some data about this relation in "loblolly" . 
-#?loblolly
+?Loblolly
+
+lolly = Loblolly
 
 #5a. Create a scatter plot of height vs age. Does a linear model seem like a good choice here?
 
+l.plot = ggplot(data = lolly, aes(x = height, y = age))+
+  geom_point()#a linear model is not a good idea, the data is not linear
+
+l.plot
+
 #5b. Calculate a linear model of this relationship, calculate your predicted values (y-hat), and add that line and the uncertainties around it, to your graph.
+
+X = lolly$height
+Y = lolly$age
+ones = matrix(1,nrow = length(Y))
+Xd = cbind(ones,X)
+b = B(Xd, Y) 
+yhat=Xd%*%b
+residuals = Y-yhat
+SSE = t(residuals)%*%residuals
+MSE = SSE / (length(Y)-length(b)) 
+s = sqrt(MSE)
+covB = solve(t(Xd)%*%Xd)*as.vector(s^2)
+stdb = diag(sqrt(covB))
+
+yhatHi = Xd%*%(b+2*stdb)
+yhatLo = Xd%*%(b-2*stdb)
+
+n.plot = l.plot + geom_ribbon(aes(x=X,ymin = yhatLo,ymax = yhatHi, colour = "2 sigma SE"),fill = "green", alpha = 0.1)+
+  geom_line(aes(X,yhat))
+
+n.plot 
 
 
 #5c. Now calculate the residuals (Y-Yhat). Do you notice a pattern?
 
+plot(residuals)
 
 #5d. Let's try a non-linear model. A polynomial model. For a polynomial model, our design matrix should be, for example [X^2 X 1's], although more pieces could be added. Create a new design matrix and use your function to calcualte a polynomial regression. Add your polynomial model (and it's uncertainties) to your plot. Does this work better?
 
