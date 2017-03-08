@@ -105,6 +105,7 @@ ggplot(df, aes(x = V1, y= V2))+
 #3 Principal components analysis of timeseries data 
 #3a. Load in the river flow data from North America.
 
+setwd("//cefnsshares/Homes/NAU-STUDENTS/sha59/Desktop/ENV599/lab08-sarcusa")
 setwd("C:/Users/sha59/Google Drive/ENV599/lab08-sarcusa")
 load("riversNA.Rdata")
 
@@ -171,6 +172,7 @@ PCs = (scaled %*% P) #61 PCs, yes it is the right number because that's also the
 #How many PCs do you think we should look at?
 
 var = diag(cov(PCs)/sum(cov(PCs)))
+var = (d/sum(d))
 p1 = c(1:61)
 plot(p1, var, type = "l", xlab = "PC", ylab = "Fraction of variance", xaxt = "n")
 axis(1, at = 1:61)
@@ -178,13 +180,14 @@ axis(1, at = 1:61)
 
 #4b. Use ggplot to make a timeseries (time vs PCs) for all the PCs you chose to investigate (at least 3). You can make these as individual figures, but using the gridExtra package and grid.arrange() would be more useful.
 
-year = rep(1948:1996, each = 12)
-month.names = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-months = rep(month.names, 49)
 
-mat = cbind(months,year,PCs)
+#month.names = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+#months = rep(month.names, 49)
+#mat = cbind(months,year,PCs)
+#colnames(df) = c("Month", "Year", 1:61)
+
 df = as.data.frame(PCs)
-colnames(df) = c("Month", "Year", 1:61)
+year = rep(1948:1996, each = 12)
 
 library(ggplot2)
 
@@ -229,7 +232,7 @@ PC1.plot
 
 #4c. Make maps of all the EOFs using the ggmap library. 
 
-install.packages("ggmap")
+#install.packages("ggmap")
 #then you should be set to proceed as normal.
 #First, you'll need to extract all of your lats and longs for the records you selected.
 
@@ -242,7 +245,8 @@ for(i in 1:length(tu)){
 coord.df = as.data.frame(t(coord.toPC))
 colnames(coord.df) = c("Lat", "Long")
 
-map.df = cbind(coord.df, t(PCs[1:588,]))
+map.df = cbind(coord.df, P)
+names(map.df)[c(3,4,5,6)]= c("PC1", "PC2", "PC3", "PC4")
 
 #Then save the EOFs and the coordinates in a data.frame.
 
@@ -264,16 +268,45 @@ plot(map)
 #then start your ggmap with this map, and add layers, exactly like ggplot
 ?ggmap
 
-my.map = ggmap(map, extent = "normal", legend = "right")+
-  geom_point(data = map.df, aes(x = Long, y = Lat, colour = map.df$`1`), )+
-  scale_colour_gradientn(colours=rainbow(4))
-  
-my.map
-
 #Let's visualize our EOFs as colored dots (where the color corresponds to the loading (the values in E$v)). Make your dots an appropriate size, and make a nice color scale. Colors on EOF maps should always go to white near the zero values, since we want to disregard the low loadings.
 
+my.map1 = ggmap(map, extent = "normal", legend = "right")+
+  geom_point(data = map.df, aes(x = Long, y = Lat, colour = PC1), size =3)+
+  scale_color_gradient2(high = "white", low ="red")+
+  labs(title = "PCA loadings US rivers 1948-1996", x = "Longitude", y = "Latitude")
+  
+my.map1
 
 #Go ahead and make maps for all your EOFs that you chose to investigate. They can each be there own figure. Or you could put them in all the same with grid.arrange() or you could pair EOFs with their PCs (my personal favorite option). Your choice.
+
+mid = mean(map.df$PC2)
+
+my.map2 = ggmap(map, extent = "normal", legend = "right")+
+  geom_point(data = map.df, aes(x = Long, y = Lat, colour = PC2), size =3)+
+  scale_color_gradient2(midpoint = mid, mid = "white", low ="red", high = "blue")+
+  labs(x = "Longitude", y = "Latitude")
+
+my.map2
+
+mid = mean(map.df$PC3)
+
+my.map3 = ggmap(map, extent = "normal", legend = "right")+
+  geom_point(data = map.df, aes(x = Long, y = Lat, colour = PC3), size =3)+
+  scale_color_gradient2(midpoint = mid, mid = "white", low ="red", high = "blue")+
+  labs(x = "Longitude", y = "Latitude")
+
+my.map3
+
+mid = mean(map.df$PC4)
+
+my.map4 = ggmap(map, extent = "normal", legend = "right")+
+  geom_point(data = map.df, aes(x = Long, y = Lat, colour = PC4), size =3)+
+  scale_color_gradient2(midpoint = mid, mid = "white", low ="red", high = "blue")+
+  labs(x = "Longitude", y = "Latitude")
+
+my.map4
+
+grid.plot2 = grid.arrange(my.map1, my.map2, my.map3, my.map4)
 
 #4d. Describe and interpret your results. What are the primary spatial and temporal patterns of riverflow variability in the US?
 
