@@ -437,7 +437,7 @@ Scales library allows for date formatting
 
 ```{r}
 library(scales)
-#?scales
+?scales
 ```
 
 
@@ -475,7 +475,10 @@ ggplot(data = data, aes(x = DateTime, y = TideHeight)) +
 Autocorrelation function
 
 ```{r}
-acf1 = acf(data$TideHeight, lag.max = 64, plot = FALSE)
+
+#ACF is the correlation of something to itself with increasing lag; negative values indicate no predictive capacity/power
+#predictive power will decrease with time but start increasing a little after a while after the matching increases, but will never be as high as before, this indicates some periodicity
+acf1 = acf(data$TideHeight, lag.max = 300, plot = FALSE)
 
 ggplot() + geom_line(aes(x = acf1$lag, y = acf1$acf)) +
   scale_y_continuous(name = "Autocorrelation (-)") +
@@ -494,6 +497,9 @@ Does the semi-diurnal or the diurnal oscillation contain more variance? To answe
 Removed the mean from the signal
 
 ```{r}
+#this should always be the first stage
+#force the signal to be stationary
+
 x = data$TideHeight - mean(data$TideHeight)
 ```
 
@@ -502,7 +508,10 @@ Apply a taper to prevent spectral leakage.
 The series is finite length, so there are 'discontinuities' at either end. What this means is that energy 'leaks' into neighbouring frequency bins. This is called 'leakage' and is particularly problematic for narrow banded or short time series.
 
 ```{r}
-xt = spec.taper(x, p=0.1)
+
+#tapper = bringing start and end values to zero
+
+xt = spec.taper(x, p=0.1) #p is the proportion amount that we are tapering out, here it is 10 %
 ```
 
 We can visualize what this did by plotting the difference
@@ -515,21 +524,25 @@ plot(xt - x)
 or the taper itself
 
 ```{r}
-plot(xt/x)
+plot(xt/x) #there are many types of tapers, often invented depending on the field of study
 ```
 
 
 Compute the periodogram
 
 ```{r}
+
+
 ps = pgram(xt,1)
 ```
 
 Let's plot the period instead of frequency
 
 ```{r}
+
+#use xlim to focus on the data, because very long term trend is visible when plotting the full spectrum
 plot((1/ps$freqArray), ps$power, type='l', col='black', 
-     xlab='Period (Hrs)', ylab='Power (m^2/Hz)', xli=c(1,36))
+     xlab='Period (Hrs)', ylab='Power (m^2/Hz)', xlim=c(10,30))
 ```
 
 Semi-diurnal tidal harmonic constituents from NOAA are 
@@ -543,11 +556,11 @@ N2 (large lunar elliptic semidiurnal) = 12.65 hr @ 0.02 sq m
 
 ```{r}
 plot((1/ps$freqArray), ps$power, type='l', lwd=3, col='black', 
-     xlab='Period (Hrs)', ylab='Power (m^2/Hz)', xli=c(11,13))
+     xlab='Period (Hrs)', ylab='Power (m^2/Hz)', xlim=c(11,13))
 
 abline(v=c(12, 12.42, 12.65), col=c("red","green","blue"))
 text(12, 0.06, "S2", col="red")
-text(12.42, 0.1, "M2", col="green")
+text(12.42, 0.1, "M2", col="green") #terrible job predicting this one, this one has several peaks maybe due to leakage, can play around with the taper, here the periodogram is raw so a lot of noise will be still present (can smooth it out)
 text(12.65, 0.02, "N2", col="blue")
 ```
 
@@ -576,8 +589,14 @@ Loosely speaking the rms can be seen as a measure of the amplitude of a waveform
 To get around this problem you can square the amplitude values before averaging, and then take the square root (notice that squaring also gives more weight to the extreme amplitude values)
 
 ```{r}
-rms_val = sqrt(mean(xt^2))
+#check if it was done right, area under the curve is the same in the ts
+#application of Parseval's theorem
+rms_signal = sqrt(mean(xt^2))
 rms_val
+
+rms_theory = sqrt(sum(ps$power))
+
+2*rms_signal #average tide height?
 ```
 
 This gives us the average tidal amplitude. The range is 2 * amplitude
@@ -610,7 +629,7 @@ acf2ps = Re(fft(acf$acf))[1:length(ps$freqArray)]
 We make a plot of period against spectral density, doing the usual normalization based on length and one-sidedness
 
 ```{r}
-plot((1/ps$freqArray), 2*acf2ps/length(ps$freqArray), xli=c(1,36),'l', 
+plot((1/ps$freqArray), 2*acf2ps/length(ps$freqArray), xlim=c(10,30),'l', 
      xlab="Period (Hrs)", ylab="Power (m^2/Hz)")
 ```
 
@@ -620,7 +639,7 @@ plot((1/ps$freqArray), 2*acf2ps/length(ps$freqArray), xli=c(1,36),'l',
 Periodogram function in the 'spec' library
 
 ```{r}
-raw.spec = spec.pgram(xt, demean=F, plot=F, taper=0)
+raw.spec = spec.pgram(xt, demean=F, plot=F, taper=0) #can also use function detrend
 ```
 
 Create a dataframe and plot
@@ -668,10 +687,12 @@ $2\frac{S_k}{\chi^2_{\nu, \alpha/2}} < S_k < 2\frac{S_k}{\chi^2_{\nu, 1-\alpha/2
 
 ```{r}
 alpha = 0.05
-U = qchisq(alpha/2, 2) 
+U = qchisq(alpha/2, 2) #2 df, but this will increase with the shape and size of the kernel
 L = qchisq(1-(alpha/2), 2) 
 
-spec.df$CIlower = 2*spec.df$spec/L
+raw.spec$df
+
+spec.df$CIlower = 2*spec.df$spec/L 
 spec.df$CIupper = 2*spec.df$spec/U
 ```
 
