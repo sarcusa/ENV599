@@ -5,7 +5,7 @@
 
 ## 1.1. Use the read.csv function to read the wavedata.csv file
 
-d = read.csv("wavedata.csv", header = TRUE, sep = ",")
+d <- read.csv("wavedata.csv", header = TRUE, sep = ",")
 
 ## This is sea surface elevation data measured on a beach 
 ## (specifically, it came from Praa Sands, England, and it was measured by yours truly)
@@ -15,43 +15,72 @@ d = read.csv("wavedata.csv", header = TRUE, sep = ",")
 
 ## 1.2. Use R to work out the sample frequency? (number of sea surface elevation samples per second, or Hz) Round to the nearest integer
 
-(d[1:56,])
+freq.df <- matrix(data = NA, nrow = length(seq(round(min(d$Time)), round(max(d$Time)), by = 1)), ncol= 1)
+freq.df[1] <- sum(d$Time <2000 +1)-1
 
-Fs = round(sum(d$Eta ))
-
-freq.df = matrix(data = NA, nrow = )
-
-for(i in seq(round(min(d$Time)), round(max(d$Time)), by = 1)){
-  sum(d$Time <[i +1])-1
-  sum(d$Time >[i] & d$Time <[i +1])-1
-  sum(d$Time >2002 & d$Time <2003)-1
+for(i in 2001:3000){
+  freq.df[i] <- sum(d$Time >i & d$Time <i +1)-1
 }
 
+freq.df <- na.omit(freq.df)
+
+Fs <- round(mean(freq.df/1))
+print(Fs) #samples per second
 
 
 ## 1.3. Recast the time vector so it starts from zero
 
+t.diff <- diff(d$Time)
+duration = max(d$Time)-min(d$Time)
+recast.time <- seq(0, duration-1, by = t.diff)
 
 ## 1.4. Show what proportion of the sea surface elevations are NAs
 
+nas <- round((sum(is.na(d$Eta))/length(d$Eta))*100, digits = 3)
+print(nas) #percentage of NAs in the sea surface elevations
 
 ## 1.5. We don't want the NA values but we want to keep the regular time stamp. This means replacing NAs with an estimated value, rather than removing them
 # load the 'zoo' library and use the 'na.approx' method to replace each NA with interpolated values
 
+#install.packages("zoo")
+library(zoo)
+
+cleaned <- na.approx(d$Eta)
 
 ## 1.6. Check that there are no NAs in the sea surface elevation data
 
+which(is.na(cleaned)) #no NAs
 
 ## 1.7. What is the mean water depth?
 
+print(mean(cleaned))
 
 ## 1.8. Recast this no-NA sea surface elevation so it has zero mean
 
+scaled <- scale(cleaned)
+scaled <- scaled [-100001]
 
 ## 1.9. Make a plot of the time-series of time in minutes versus demeaned sea surface elevation. 
 ##    Make it appropriately beautiful with labels containing units
 
 
+#MUST RECAST TIME INTO MINUTES
+
+library(ggplot2)
+
+df <- cbind(recast.time, scaled)
+colnames(df) <- c("Time", "ETA")
+df <- as.data.frame(df)
+
+my.plot <- ggplot(data = df, aes(x = Time, y = ETA)) +
+  geom_line(colour = "blue")+
+  scale_x_continuous(breaks = seq(0, 1000, by = 10))+
+  labs(title = "Praa Sands, England", x = "Minutes", y = "Sea surface elevation (m)")
+
+scale_x_continuous(breaks = round(seq(min(df$Time), max(df$Time), by = 60),1))
+
+
+my.plot
 ##1.10. Later, we're going to use the Fourier transform to transform the series from the time to frequency domain. 
 ##     What will be the frequency resolution (the interval between adjacent frequency bins, or bin width)?
 
