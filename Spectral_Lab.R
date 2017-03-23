@@ -57,7 +57,7 @@ print(mean(cleaned))
 
 ## 1.8. Recast this no-NA sea surface elevation so it has zero mean
 
-scaled <- scale(cleaned)
+scaled <- cleaned - mean(cleaned)
 scaled <- scaled [-100001]
 
 ## 1.9. Make a plot of the time-series of time in minutes versus demeaned sea surface elevation. 
@@ -72,27 +72,31 @@ df <- cbind(recast.time, scaled)
 colnames(df) <- c("Time", "ETA")
 df <- as.data.frame(df)
 
+min.period = seq(0, 1000, by = 1000/16)
+min.labels = seq(0, 16, by = 1)
+#hrs.freqs = 1/hrs.period
+
 my.plot <- ggplot(data = df, aes(x = Time, y = ETA)) +
   geom_line(colour = "blue")+
-  scale_x_continuous(breaks = seq(0, 1000, by = 10))+
-  labs(title = "Praa Sands, England", x = "Minutes", y = "Sea surface elevation (m)")
-
-scale_x_continuous(breaks = round(seq(min(df$Time), max(df$Time), by = 60),1))
-
+  scale_x_continuous(breaks = min.period, labels = min.labels)+
+  labs(title = "Praa Sands, England", x = "Minutes", y = "Demeaned Sea surface elevation (m)")
 
 my.plot
 ##1.10. Later, we're going to use the Fourier transform to transform the series from the time to frequency domain. 
 ##     What will be the frequency resolution (the interval between adjacent frequency bins, or bin width)?
 
+freq.res = Fs/length(df$ETA)
 
 #=================================================
 ## PART 2 : AUTOCORRELATION ANALYSIS OF WAVES
 
 ## 2.1. Let's have a look at the autocorrelation function of the trace. Compute the autocorrelation up to lag corresponding to 10 seconds
 
+ACF <- acf(df$ETA, lag.max = length(df$ETA) , plot = F)
 
 ## 2.2 Make a plot of the autocorrelation function (ACF) versus time in seconds. 
 
+plot(x = df$Time, y = ACF$acf, type = "l", ylab = "ACF", xlab = "Time (seconds)", xlim = c(0,100))
 
 ## Notice that the ACF dips below zero then comes back up in a "2nd bump" 
 ## (between the first zero up-crossing and second zero down-crossing). 
@@ -102,6 +106,12 @@ my.plot
 ##     (i.e., first down-crossing, first up-crossing, and second down-crossing)
 ##     What range of periods do you expect the dominant waves to have?
 
+cross = which.min(abs(ACF$acf[1:] - 0))
+
+plot(x = df$Time, y = ACF$acf, type = "l", ylab = "ACF", xlab = "Time (seconds)", xlim = c(0,100))
+text()
+text()
+text()
 
 #=================================================
 ## PART 3 : SPECTRAL ANALYSIS OF WAVES
