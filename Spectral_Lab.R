@@ -106,7 +106,7 @@ plot(x = df$Time, y = ACF$acf, type = "l", ylab = "ACF", xlab = "Time (seconds)"
 ##     (i.e., first down-crossing, first up-crossing, and second down-crossing)
 ##     What range of periods do you expect the dominant waves to have?
 
-cross = which.min(abs(ACF$acf[1:] - 0))
+cross = min(which(ACF$acf < 0))
 
 plot(x = df$Time, y = ACF$acf, type = "l", ylab = "ACF", xlab = "Time (seconds)", xlim = c(0,100))
 text()
