@@ -155,13 +155,15 @@ max(normal)
 
 df2 = cbind(pg$freq*Fs, pg$spec)
 colnames(df2) = c("Frequency", "Spectrum")
+ones = rep(1, length(df2[,1]))
+Period2 = ones/df2[,1]
+df2 <- cbind(df2, Period2)
 df2 = as.data.frame(df2[402:3001,])
 
 spec.plot = ggplot(df2)+
-  geom_line(aes(x = df2$Frequency, y = df2$Spectrum))+
-  scale_x_log10(limits = c(0.4, 1), breaks = c(0.4, 0.5, 0.7, 1))+
-  scale_y_continuous(limits = c(0, 2.5))+
-  labs(x = "Frequency * sample frequency", y = "Power spectrum", title = "RAW Spectral analysis")
+  geom_line(aes(x = df2$Period2, y = df2$Spectrum))+
+  labs(x = "Period", y = "Power spectrum", title = "RAW Spectral analysis")+
+  scale_x_continuous(breaks = c(1, 2, 3), limits = c(0, 3))
   
 spec.plot
 
@@ -170,6 +172,9 @@ spec.plot
 pg2 = spec.pgram(df$ETA, taper = 0.1, pad = 0.15)
 df3 = cbind(pg2$freq*Fs, pg2$spec)
 colnames(df3) = c("Frequency", "Spectrum")
+ones = rep(1, length(df3[,1]))
+Period3 <- ones/df3[,1]
+df3 <- cbind(df3, Period3)
 df3 = as.data.frame(df3[402:3001,])
 
 ## 3.8 Use the gridExtra package to make a (2 column) side-by-side graph of the raw and unpadded spectrum plots. What is the major difference? 
@@ -177,10 +182,8 @@ df3 = as.data.frame(df3[402:3001,])
 library(gridExtra)
 
 spec.plot2 = ggplot(df3)+
-  geom_line(aes(x = df3$Frequency, y = df3$Spectrum))+
-  scale_x_log10(limits = c(0.4, 1), breaks = c(0.4, 0.5, 0.7, 1))+
-  scale_y_continuous(limits = c(0, 2.5))+
-  labs(x = "Frequency * sample frequency", y = "Power spectrum", title = "PADDED")
+  geom_line(aes(x = df3$Period3, y = df3$Spectrum))+
+  labs(x = "Period", y = "Power spectrum", title = "PADDED")
 
 spec.plot2
 
@@ -192,16 +195,17 @@ my.power.plot = grid.arrange(spec.plot, spec.plot2, ncol = 1, nrow = 2)
 ##      Use a width of 5 for the smoothing function
 ##      Make a (3 column) side by side plot of raw, unpadded, and filtered spectrum plots
 
-pg3 = spec.pgram(df$ETA, taper = 0.1, pad = 0.15, spans = 5)
+pg3 = spec.pgram(df$ETA, taper = 0.1, pad = 0.15, spans = 5, plot = F)
 df4 = cbind(pg3$freq*Fs, pg3$spec)
 colnames(df4) = c("Frequency", "Spectrum")
+ones = rep(1, length(df4[,1]))
+Period4 <- ones/df4[,1]
+df4 <- cbind(df4, Period4)
 df4 = as.data.frame(df4[402:3001,])
 
 spec.plot3 = ggplot(df4)+
-  geom_line(aes(x = df4$Frequency, y = df4$Spectrum))+
-  scale_x_log10(limits = c(0.4, 1), breaks = c(0.4, 0.5, 0.7, 1))+
-  scale_y_continuous(limits = c(0, 2.5))+
-  labs(x = "Frequency * sample frequency", y = "Power spectrum", title = "MODIFIED DANIELL")
+  geom_line(aes(x = df4$Period4, y = df4$Spectrum))+
+  labs(x = "Period", y = "Power spectrum", title = "MODIFIED DANIELL")
 
 spec.plot3
 
@@ -216,21 +220,25 @@ L = qchisq(1-(alpha/2), df = pg3$df)
 pg3$CIlower = 2*pg3$spec/L
 pg3$CIupper = 2*pg3$spec/U
 
-df5 = cbind(pg3$freq*Fs, pg3$spec, pg3$CIlower, pg3$CIupper)
-colnames(df5) = c("Frequency", "Spectrum", "Lower", "Upper")
+df5 = cbind(pg3$spec, pg3$CIlower, pg3$CIupper)
+colnames(df5) = c("Spectrum", "Lower", "Upper")
 df5 = as.data.frame(df5[402:3001,])
+df5 = cbind(df4$Period4, df5)
+names(df5)[1] <- "Period"
 
 ## 3.11. Make a (3 column) side by side plot of raw, unpadded, and filtered spectrum plots. 
 ##       On the plot of filtered spectrum, add the lines for the upper and lower confidence intervals, and log scale the y axis
 
 spec.plot4 = ggplot() + 
-  geom_line(aes(x = df5$Frequency, y = df5$Spectrum, col = "Estimate"))+
-  geom_line(aes(x = df5$Frequency, y = df5$Lower, col = "Lower CI"))+
-  geom_line(aes(x = df5$Frequency, y = df5$Upper, col = "Upper CI"))+
+  geom_line(aes(x = df5$Period, y = df5$Spectrum, col = "Estimate"))+
+  geom_line(aes(x = df5$Period, y = df5$Lower, col = "Lower CI"))+
+  geom_line(aes(x = df5$Period, y = df5$Upper, col = "Upper CI"))+
   scale_y_log10()+
-  labs(x = "Frequency * sample frequency", y = "Power spectrum", title = "MODIFIED DANIELL")
+  labs(x = "Period", y = "Power spectrum", title = "MODIFIED DANIELL")
   
+spec.plot4
 
+my.power.plot = grid.arrange(spec.plot, spec.plot2, spec.plot4, ncol = 3, nrow = 1)
 
 #=================================================
 ## PART 4 : STATISTICS AND SIMULATION OF WAVES
