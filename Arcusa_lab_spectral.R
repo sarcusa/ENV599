@@ -128,8 +128,8 @@ RMS.height = RMS.amp*2
 wave.plot = ggplot(df)+
   geom_line(aes(x = Time, y = ETA))+
   xlim(0, 103)+
-  geom_hline(yintercept = RMS.height, colour = "red")+
-  annotate("text", x = 10, y = 0.75, label = "RMS wave height 0.780 m")
+  annotate("text", x = 10, y = 0.9, label = "RMS wave height 0.780 m")+
+  geom_segment(x = 0, y = 0, xend = 0, yend = RMS.height, colour = "blue", arrow = arrow() )
 
 wave.plot
 
@@ -149,26 +149,87 @@ print(RMS.amp)
 ##     Note that the usual range of wave periods on beaches is ~4 to ~30 seconds
 ##     Also note that the frequency vector needs to be multiplied by the sample frequency
 
+normal = which(df$Time >4 & df$Time < 30)
+min(normal)
+max(normal)
+
 df2 = cbind(pg$freq*Fs, pg$spec)
 colnames(df2) = c("Frequency", "Spectrum")
+df2 = as.data.frame(df2[402:3001,])
+
+spec.plot = ggplot(df2)+
+  geom_line(aes(x = df2$Frequency, y = df2$Spectrum))+
+  scale_x_log10(limits = c(0.4, 1), breaks = c(0.4, 0.5, 0.7, 1))+
+  scale_y_continuous(limits = c(0, 2.5))+
+  labs(x = "Frequency * sample frequency", y = "Power spectrum", title = "RAW Spectral analysis")
+  
+spec.plot
 
 ## 3.7. Compute the spectrum with 10% tapering and 15% padding (hint: ?spec.pgram)
 
+pg2 = spec.pgram(df$ETA, taper = 0.1, pad = 0.15)
+df3 = cbind(pg2$freq*Fs, pg2$spec)
+colnames(df3) = c("Frequency", "Spectrum")
+df3 = as.data.frame(df3[402:3001,])
 
 ## 3.8 Use the gridExtra package to make a (2 column) side-by-side graph of the raw and unpadded spectrum plots. What is the major difference? 
 
+library(gridExtra)
+
+spec.plot2 = ggplot(df3)+
+  geom_line(aes(x = df3$Frequency, y = df3$Spectrum))+
+  scale_x_log10(limits = c(0.4, 1), breaks = c(0.4, 0.5, 0.7, 1))+
+  scale_y_continuous(limits = c(0, 2.5))+
+  labs(x = "Frequency * sample frequency", y = "Power spectrum", title = "PADDED")
+
+spec.plot2
+
+my.power.plot = grid.arrange(spec.plot, spec.plot2, ncol = 1, nrow = 2)
+
+#the major difference is that the pwer spectrum values are exaggerated in the padded analysis
 
 ## 3.9. Compute the spectrum with 10% tapering, 15% padding and a modified Daniell (or rectangular) window to be used to smooth the periodogram. 
 ##      Use a width of 5 for the smoothing function
 ##      Make a (3 column) side by side plot of raw, unpadded, and filtered spectrum plots
 
+pg3 = spec.pgram(df$ETA, taper = 0.1, pad = 0.15, spans = 5)
+df4 = cbind(pg3$freq*Fs, pg3$spec)
+colnames(df4) = c("Frequency", "Spectrum")
+df4 = as.data.frame(df4[402:3001,])
+
+spec.plot3 = ggplot(df4)+
+  geom_line(aes(x = df4$Frequency, y = df4$Spectrum))+
+  scale_x_log10(limits = c(0.4, 1), breaks = c(0.4, 0.5, 0.7, 1))+
+  scale_y_continuous(limits = c(0, 2.5))+
+  labs(x = "Frequency * sample frequency", y = "Power spectrum", title = "MODIFIED DANIELL")
+
+spec.plot3
+
+my.power.plot = grid.arrange(spec.plot, spec.plot2, spec.plot3, ncol = 3, nrow = 1)
 
 ## 3.10. Compute the 95% confidence intervals for the filtered spectrum
 
+alpha = 0.05
+U = qchisq(alpha/2, df = pg3$df)
+L = qchisq(1-(alpha/2), df = pg3$df)
+
+pg3$CIlower = 2*pg3$spec/L
+pg3$CIupper = 2*pg3$spec/U
+
+df5 = cbind(pg3$freq*Fs, pg3$spec, pg3$CIlower, pg3$CIupper)
+colnames(df5) = c("Frequency", "Spectrum", "Lower", "Upper")
+df5 = as.data.frame(df5[402:3001,])
 
 ## 3.11. Make a (3 column) side by side plot of raw, unpadded, and filtered spectrum plots. 
 ##       On the plot of filtered spectrum, add the lines for the upper and lower confidence intervals, and log scale the y axis
 
+spec.plot4 = ggplot() + 
+  geom_line(aes(x = df5$Frequency, y = df5$Spectrum, col = "Estimate"))+
+  geom_line(aes(x = df5$Frequency, y = df5$Lower, col = "Lower CI"))+
+  geom_line(aes(x = df5$Frequency, y = df5$Upper, col = "Upper CI"))+
+  scale_y_log10()+
+  labs(x = "Frequency * sample frequency", y = "Power spectrum", title = "MODIFIED DANIELL")
+  
 
 
 #=================================================
