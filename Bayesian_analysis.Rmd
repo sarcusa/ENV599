@@ -135,7 +135,7 @@ We'll calculate posterior distribution calculations using 2 different choices of
 Let's start with a list of plausible proportions 
 ```{r}
 #vector of possible proportions
- p = seq(0.05, 0.95, by = 0.1)
+   p = seq(0.05, 0.95, by = 0.1)
 ```
 
 assign weights, and then normalize to probabilities
