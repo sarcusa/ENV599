@@ -116,30 +116,22 @@ ybar = mean(y)
 
 # 3.3. Compute the likelihood on the list of values in mu and place the likelihood values in a vector called L
 
-L = vector()
-
-lkl = function(MU, y){
-  n = length(y)
-  ybar = mean(y)
-  sigma = sd(y)
-  L = exp(-(n/2 * sigma^2) * (MU - ybar)^2)
-  return(L)
-}
-
-lkl(MU, y)
-
 n = length(y)
 ybar = mean(y)
-sigma = sd(y)
-L = exp(-(n/2 * sigma^2) * (MU - ybar)^2)
+sigma = sd(MU)
+L = exp(-(n/(2 * sigma^2)) * (MU - ybar)^2)
 
 # One can compute the posterior probabilities for MU using the following formula:
 # posterior = (prior*like)/sum(prior*like)
 # 3.4. Compute the posterior probabilities of MU for this example.
 
+posterior = (MU*L)/sum(MU*L)
 
 # 3.5. Find a 75% probability interval for MU (hint: use the function discint)
 
+dist = cbind(MU, posterior)
+discint(dist, .75)
+#interval is between 1143 to 1397 mm
 
 ##=================================================
 ## PART 4 : ESTIMATE MEAN AND VARIANCE OF NORMALLY DISTRIBUTED DATA
@@ -158,13 +150,16 @@ sleepytime = c(9.0, 8.5, 7.0, 8.5, 6.0, 12.5, 6.0, 9.0, 8.5, 7.5, 8.0, 6.0, 9.0,
 # let's break this problem down:
 # 4.1. First, you'll need to compute the sum of squares
 
+SS = sum((sleepytime - mean(sleepytime))^2)
 
 # 4.2. Next, compute SIGMA^2, which is a 1000 random draw computed as the sum of squares divided by draws from the 
 # chi-square distribution with n-1 degrees of freedom
 
+var = SS/ rchisq(1000, df = length(sleepytime)-1)
 
 # 4.3. Now compute MU, which is a 1000 random draw from a Normal(mean, sd) distribution
 
+MU = rnorm(1000, mean(sleepytime), sd(sleepytime))
 
 # 4.4. Use the simulated sample to find the 90% interval estimates for the mean
 #      MU and the standard deviation SIGMA.
@@ -173,11 +168,29 @@ sleepytime = c(9.0, 8.5, 7.0, 8.5, 6.0, 12.5, 6.0, 9.0, 8.5, 7.5, 8.0, 6.0, 9.0,
 #      (hint: we're looking for a vector of quantiles of MU and SIGMA)
 #      (hint 2: you can do this the regular frequentist way, or use the normpostsim function from the LearnBayes library)
 
+quantile(MU, probs = c(0.1, 0.9))
+quantile(sqrt(var), probs = c(0.1, 0.9))
+
+#A 90% credible interval for the mean sleep is (5:42, 10:03) hours
+#A 90% credible interval for the the standard deviation in sleep is (1:23, 2:15) hours
 
 # 4.5. You are interested in estimating the 4th quartile (p75) of the normal population of sleep times. 
 # Using the fact that p75 = MU + (0.674 * SIGMA), find the posterior mean and posterior standard deviation of p75.
 
+p75 = MU + (0.674 * sqrt(var))
 
+mean = mean(p75) #maybe the answer?
+sigma = sd(p75) #answer?
 
+n = length(p75)
+ybar = mean(p75)
+sigma = sd(p75)
+L = exp(-(n/(2 * sigma^2)) * (MU - ybar)^2)
 
+posterior.MU = (MU*L)/sum(MU*L)
+posterior.sd = (sqrt(var)*L)/sum(sqrt(var)*L)
 
+dist.MU = cbind(MU, posterior)
+dist.sd = cbind(sqrt(var), posterior)
+discint(dist.MU, .75) #distribution?
+discint(dist.sd, .75) #distribution?
