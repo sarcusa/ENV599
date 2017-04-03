@@ -192,5 +192,5 @@ posterior.sd = (sqrt(var)*L)/sum(sqrt(var)*L)
 
 dist.MU = cbind(MU, posterior)
 dist.sd = cbind(sqrt(var), posterior)
-discint(dist.MU, .75) #distribution?
-discint(dist.sd, .75) #distribution?
+discint(dist.MU, .75) #estimates of the answers?
+discint(dist.sd, .75) #estimates of the answers?
